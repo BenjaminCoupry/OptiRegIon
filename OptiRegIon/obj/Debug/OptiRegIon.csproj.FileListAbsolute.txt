@@ -1,0 +1,7 @@
+C:\Users\benja\source\repos\OptiRegIon\OptiRegIon\bin\Debug\OptiRegIon.exe.config
+C:\Users\benja\source\repos\OptiRegIon\OptiRegIon\bin\Debug\OptiRegIon.exe
+C:\Users\benja\source\repos\OptiRegIon\OptiRegIon\bin\Debug\OptiRegIon.pdb
+C:\Users\benja\source\repos\OptiRegIon\OptiRegIon\obj\Debug\OptiRegIon.csprojAssemblyReference.cache
+C:\Users\benja\source\repos\OptiRegIon\OptiRegIon\obj\Debug\OptiRegIon.csproj.CoreCompileInputs.cache
+C:\Users\benja\source\repos\OptiRegIon\OptiRegIon\obj\Debug\OptiRegIon.exe
+C:\Users\benja\source\repos\OptiRegIon\OptiRegIon\obj\Debug\OptiRegIon.pdb
