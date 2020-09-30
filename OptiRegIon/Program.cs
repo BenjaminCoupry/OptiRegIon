@@ -13,6 +13,29 @@ namespace OptiRegIon
     {
         static void Main(string[] args)
         {
+            Console.WriteLine("Args : pathParametres pathModeles pathAttendu pathResultat");
+            Console.WriteLine("Usage :");
+            Console.WriteLine("pathParametres = chemin d'un fichier texte contenant les parametres");
+            Console.WriteLine("pathModeles = chemin d'un fichier texte contenant les modèles a tester");
+            Console.WriteLine("une fonction est decrite composante par composante comme il suit f1(xi,pi) ; f2(xi,pi) ; fn(xi,pi)");
+            Console.WriteLine("pathAttendu = chemin vers un csv contenant les couples xy sous forme (x0 x1 ..);(y0 y1 ...)");
+            Console.WriteLine("pour les valeurs attendues de la fonction");
+            Console.WriteLine("pathResultat = chemin ou ecrire le resultat de la recherche");
+            Console.WriteLine("");
+            Console.WriteLine("-------------------------------------------");
+            Console.WriteLine("parametres du fichier parametre (nom valeur):");
+            Console.WriteLine("delta Le delta de derivation");
+            Console.WriteLine("epsilon La valeur sous laquelle le gradient est considere comme nul");
+            Console.WriteLine("maxItGrad Le nombre max d'iterations pour le gradient");
+            Console.WriteLine("stagnationsMax Le nombre de departs infructueux avant de considerer le meilleur depart comme bon");
+            Console.WriteLine("departs Le nombre maximum de departs");
+            Console.WriteLine("W1 C1 (wolfe) [0,1]");
+            Console.WriteLine("W2 C2 (wolfe) [0,1] et > C1");
+            Console.WriteLine("(optionel) borne inf pour le choix des parametres aleatoires initiaux ex :(1 2,5 3,6 ...)");
+            Console.WriteLine("(optionel) borne sup pour le choix des parametres aleatoires initiaux ex :(1 2,5 3,6 ...)");
+            Console.WriteLine("-------------------------------------------");
+            Console.WriteLine("les fonctions s'ecrivent sous la forme suivante = ( operateur( operande a)( operande b))");
+            Console.WriteLine("Exemple : p0 + (p3 * ((Cos((p1 * x0) + p2)) ^ 2)) ; Sin((p4 * x0) + p5)");
             /*
              * Usage : pathParametres = chemin d'un fichier texte contenant les parametres
              * pathModeles = chemin d'un fichier texte contenant les modèles a tester, 
@@ -37,15 +60,23 @@ namespace OptiRegIon
              * (optionel) borne inf pour le choix des parametres aleatoires initiaux (1 2,5 3,6 ...)
              * (optionel) borne sup pour le choix des parametres aleatoires initiaux (1 2,5 3,6 ...)
             */
-            string pathParametres = args[1];
-            string pathModeles= args[2];
-            string pathAttendu = args[3];
-            string pathResultat = args[4];
+            string pathParametres = args[0];
+            string pathModeles= args[1];
+            string pathAttendu = args[2];
+            string pathResultat = args[3];
             string[] fonctions = System.IO.File.ReadAllLines(pathModeles);
             string[] parametres = System.IO.File.ReadAllLines(pathParametres);
-            Optimisateur opti = new Optimisateur(Convert.ToDouble(parametres[0].Split(' ')[1]), Convert.ToDouble(parametres[1].Split(' ')[1]), Convert.ToInt32(parametres[2].Split(' ')[1]),
-                Convert.ToInt32(parametres[3].Split(' ')[1]), Convert.ToInt32(parametres[4].Split(' ')[1]), Convert.ToDouble(parametres[5].Split(' ')[1]), Convert.ToDouble(parametres[6].Split(' ')[1]));
+            double _1 = Convert.ToDouble(parametres[0].Split(' ')[1]);
+            double _2 = Convert.ToDouble(parametres[1].Split(' ')[1]);
+            int _3 = Convert.ToInt32(parametres[2].Split(' ')[1]);
+            int _4 = Convert.ToInt32(parametres[3].Split(' ')[1]);
+            int _5 = Convert.ToInt32(parametres[4].Split(' ')[1]);
+            double _6 = Convert.ToDouble(parametres[5].Split(' ')[1]);
+            double _7 = Convert.ToDouble(parametres[6].Split(' ')[1]);
+            Optimisateur opti = new Optimisateur(_1,_2,_3,_4,_5,_6,_7);
             string[] resultats;
+            Console.WriteLine();
+            Console.WriteLine("Optimisation en cours......");
             if (parametres.Count()>7)
             {
                 Vector pmin = Vector.FromString(parametres[7]);
@@ -61,16 +92,17 @@ namespace OptiRegIon
             {
                 foreach (string line in resultats)
                 {
-                    file.WriteLine(resultats);
+                    file.WriteLine(line);
                 }
             }
 
 
-            //Penser a faire un interpreteur de string (string -> Func<Vector,Vector,Vector>), puis a remplacer les params par les params optimaux trouves pour renvoyer la string
+            /*
             Optimisateur op = new Optimisateur(0.00000001,0.1,1000,4,10,0.3,0.4);
             string fs = "=(p0 / (p1 + (Exp (p2 * x0))) ) ; Sin ( (p1 * x0) + p3 )";
             string fs2 = "p0 + (p3 * (Atan ((p1 * x0) + p2))) ; Sin ( (p4 * x0) + p5 )";
             string fs3 = "p0 + (p3 * ((Cos ((p1 * x0) + p2)) ^ 2 )) ; Sin ( (p4 * x0) + p5 )";
+            */
         }
     }
     
@@ -406,7 +438,7 @@ namespace OptiRegIon
         {
             Func<Vector, double> errParam = ErreurParametrique(f, Attendu);
             Vector paramopti = Minimiser(errParam, ParamTestMin, ParamTestMax);
-            Console.WriteLine("> Optimisation avec erreur de " + errParam(paramopti));
+            Console.WriteLine("> Optimisation avec erreur Log de " + Math.Log(errParam(paramopti)));
             return paramopti;
         }
         //Renvoie la fonction qui minimise l'erreur de f(x,param) sur l'ensemble des couples (x,f(x)) attendus
