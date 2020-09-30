@@ -13,42 +13,64 @@ namespace OptiRegIon
     {
         static void Main(string[] args)
         {
+            /*
+             * Usage : pathParametres = chemin d'un fichier texte contenant les parametres
+             * pathModeles = chemin d'un fichier texte contenant les modèles a tester, 
+             * une fonction est decrite composante par composante comme il suit f1(xi,pi) ; f2(xi,pi) ; fn(xi,pi)
+             * pathAttendu = chemin vers un csv contenant les couples xy sous forme (x0 x1 ..);(y0 y1 ...)
+             * pour les valeurs attendues de la fonction
+             * pathResultat = chemin ou ecrire le resultat de la recherche
+             * 
+             * 
+             * les fonctions s ecrivent sous la forme "= (operateur (operande a) (operande b))"
+             * Exemple "p0 + (p3 * ((Cos ((p1 * x0) + p2)) ^ 2 )) ; Sin ( (p4 * x0) + p5 )"
+             * 
+             * 
+             * Les parametres du fichier parametres sont dans l'ordre 
+             * Le delta de derivation
+             * La valeur sous laquelle le gradient est considere comme nul
+             * Le nombre max d'iterations pour le gradient
+             * Le nombre de departs infructueux avant de considerer le meilleur depart comme bon
+             * Le nombre maximum de departs
+             * C1 (wolfe) [0,1]
+             * C2 (wolfe) [0,1] et > C1
+             * (optionel) borne inf pour le choix des parametres aleatoires initiaux (1 2,5 3,6 ...)
+             * (optionel) borne sup pour le choix des parametres aleatoires initiaux (1 2,5 3,6 ...)
+            */
+            string pathParametres = args[1];
+            string pathModeles= args[2];
+            string pathAttendu = args[3];
+            string pathResultat = args[4];
+            string[] fonctions = System.IO.File.ReadAllLines(pathModeles);
+            string[] parametres = System.IO.File.ReadAllLines(pathParametres);
+            Optimisateur opti = new Optimisateur(Convert.ToDouble(parametres[0].Split(' ')[1]), Convert.ToDouble(parametres[1].Split(' ')[1]), Convert.ToInt32(parametres[2].Split(' ')[1]),
+                Convert.ToInt32(parametres[3].Split(' ')[1]), Convert.ToInt32(parametres[4].Split(' ')[1]), Convert.ToDouble(parametres[5].Split(' ')[1]), Convert.ToDouble(parametres[6].Split(' ')[1]));
+            string[] resultats;
+            if (parametres.Count()>7)
+            {
+                Vector pmin = Vector.FromString(parametres[7]);
+                Vector pmax = Vector.FromString(parametres[8]);
+                resultats = fonctions.Select(x => opti.FonctionOptimale(x, Optimisateur.ReadFromCsv(pathAttendu),pmin,pmax)).ToArray();
+            }
+            else
+            {
+                resultats = fonctions.Select(x => opti.FonctionOptimale(x, pathAttendu)).ToArray();
+            }
+            using (System.IO.StreamWriter file =
+            new System.IO.StreamWriter(@pathResultat))
+            {
+                foreach (string line in resultats)
+                {
+                    file.WriteLine(resultats);
+                }
+            }
 
-
-            
 
             //Penser a faire un interpreteur de string (string -> Func<Vector,Vector,Vector>), puis a remplacer les params par les params optimaux trouves pour renvoyer la string
             Optimisateur op = new Optimisateur(0.00000001,0.1,1000,4,10,0.3,0.4);
-            string fs = "p0 / (p1 + (Exp (p2 * x0))) ; Sin ( (p1 * x0) + p3 )";
+            string fs = "=(p0 / (p1 + (Exp (p2 * x0))) ) ; Sin ( (p1 * x0) + p3 )";
             string fs2 = "p0 + (p3 * (Atan ((p1 * x0) + p2))) ; Sin ( (p4 * x0) + p5 )";
             string fs3 = "p0 + (p3 * ((Cos ((p1 * x0) + p2)) ^ 2 )) ; Sin ( (p4 * x0) + p5 )";
-            /*
-            List<Vector> x_ = new List<Vector>();
-            for(int i=0;i<10;i++)
-            {
-                x_.Add(new Vector(new double[] { i }));
-            }
-            
-            Console.WriteLine(Operation.CompterParams(fs));
-            Func<Vector, Vector, Vector> F = Operation.Generer(fs);
-            Vector paramreel = new Vector(new double[] { 0.7, 0.2, -0.6});
-            Func<Vector, Vector> f = Optimisateur.Parametrer(F, paramreel);
-            List<Tuple<Vector, Vector>> Attendu = Optimisateur.Evaluer(x_, f);
-            */
-            Console.WriteLine(op.FonctionOptimale(fs, "D:/lab/optimisation/att.csv"));
-            Console.WriteLine(op.FonctionOptimale(fs2, "D:/lab/optimisation/att.csv"));
-            Console.WriteLine(op.FonctionOptimale(fs3, "D:/lab/optimisation/att.csv"));
-            /*
-            Vector paramsaprox = op.ParametresOptimaux(F, Attendu, new Vector(new double[] { -1, -1,-1}), new Vector(new double[] { 1, 1,1}));
-            Console.WriteLine(paramsaprox.ToString());
-            Func<Vector, Vector> f_ = Optimisateur.Parametrer(F, paramsaprox);
-            List<Tuple<Vector, Vector>> Obtenu = Optimisateur.Evaluer(x_, f_);
-            Optimisateur.WriteToCsv(Attendu,"D:/lab/optimisation/att.csv");
-            Optimisateur.WriteToCsv(Obtenu, "D:/lab/optimisation/obt.csv");
-            */
-
-
-
         }
     }
     
@@ -459,8 +481,6 @@ namespace OptiRegIon
             return result;
         }
     }
-
-
     class Operation
     {
         static List<string> MathFunc = GetMathFunc();
@@ -572,7 +592,15 @@ namespace OptiRegIon
             Operandes = new List<Operation>();
             if(blocs.Count ==1 )
             {
-                Operateur = blocs[0];
+                string decomp = blocs[0];
+                string dcp = decomp;
+                do
+                {
+                    decomp = dcp;
+                    dcp = TrouverBlocs(decomp)[0];
+                }
+                while (decomp != dcp) ;
+                Operateur = decomp;
             }
             else
             {
@@ -590,6 +618,10 @@ namespace OptiRegIon
                             Operandes.Add(new Operation(sub));
                         }
                     }
+                }
+                if(string.IsNullOrEmpty(Operateur))
+                {
+                    Operateur = "=";
                 }
             }
             if(string.IsNullOrEmpty(s))
